@@ -7,19 +7,170 @@ output:
 
 
 ## Loading and preprocessing the data
+###My assumptions are:
+- You already ran the command: 'git clone git clone https://github.com/username/RepData_PeerAssessment1.git'. Where "username" is your githup username.
+- changed directory to 'RepData_PeerAssessment1'
+- The file "activity.zip" does exist.
+- The following packages should be installed: 'dplyr' and 'lubridate'
+###End 
 
+1. Read the input file
+```{r loaddata, echo=TRUE}
+#loading libraries 
+library(dplyr)
+library(lubridate)
+#First unzip the file
+unzip("activity.zip")
+#read.csv the activity file and save it in data.fram activityOrig
+activityOrig <- read.csv("activity.csv", stringsAsFactors=FALSE)
+#convert to data table
+activityDT <- tbl_df(activityOrig)
+#Change the type of the date from string to date using lubridate method x 
+activityDT <- mutate(activityDT,date=ymd(date))
+#print the first 10 rows
+head(activityDT,10)
+```
+2.Process the data by doing the folloings steps. 
 
+- 
+- Filter all the steps with NA value
+- Group the data by date. 
+- Summarise the steps (column name is "sum") which calculate the total number of steps taken per day.
+
+```{r processdata, echo=TRUE}
+  activityDTH <- activityDT %>%
+    filter(!is.na(steps)) %>%
+    group_by(date) %>%
+    summarize(sum=sum(steps))
+#print the first 10 rows of the processed data
+head(activityDTH,10)
+```
+3. Ploting the histogram of number of steps per day
+```{r plotinghist, echo=TRUE}
+hist(activityDTH$sum, col="lightblue",xlab="Number of steps",
+     breaks=seq(from=0,to=25000,by=2000),
+     ylim=c(0,20),main="Histogram of number of steps per day")
+```
 
 ## What is mean total number of steps taken per day?
-
+The mean is:
+```{r echo=TRUE}
+mean(activityDTH$sum)
+```
+The meadian is:
+```{r echo=TRUE}
+median(activityDTH$sum)
+```
 
 
 ## What is the average daily activity pattern?
+1. In order to Process the data to find average daily activity pattern need to do the followings or the original data.
+- Filter all the steps with NA value
+- Group the data by Interval Identifier (values from 0 to 2355)
+- Summarise the mean ((column name is "mean") of steps for each interval identifier.
 
+```{r processIntervaldata, echo=TRUE}
+  activityDTInt <- activityDT %>%
+    filter(!is.na(steps)) %>%
+    group_by(interval) %>%
+    summarize(mean=mean(steps))
+#print the first 10 rows of the processed data
+head(activityDTInt,10)
+```
+
+2. Plot the date, using the plot function y-axis is the interval y-axis is the caluculated mean
+```{r plotIntervaldata, echo=TRUE}
+plot(activityDTInt$interval, activityDTInt$mean, 
+     col="red",type="l",
+     xlab="5 minute interval",
+     ylab="Average number of steps",
+     main="Average daily activity pattern")
+```
+3. Find the max mean entry using function top_n (x,n)  where n is number of rows to return
+
+```{r plotIntervalmaxIntery, echo=TRUE}
+#find the entry where the mean value is the maximum using top_n returns table with one row 
+maxinterval <- top_n(activityDTInt,1,mean)$interval
+#
+```
+The 5-minute interval that contains the maximum of steps, on average across all days is: `r maxinterval`
 
 
 ## Imputing missing values
+There are number of days/interval where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+1. Calculate and report the total number of missing values in the dataset 
+```{r missingvaluescalc, echo=TRUE}
+missingValCnt <- sum(is.na(activityDT$steps))
+```
+Number of missing values is: `r missingValCnt`
 
+2. Replace missing data (value NA) in steps with average interval data table that we found above. In this case we need to use 2 data table, the original table and the interval table.
+- Join by original table with the interval table by interval value. 
+- For each row that steps is equal to NA, take the value 'interval'. 
+- Find the 'mean' value of that 'interval' from the interval table. 
+- Replace the 'mean' value with 'NA'. 
+- Select the same columns names as the original table.
 
+```{r replacemissingvalues, echo=TRUE}
+activityDTNoNA <- activityDT %>%
+    left_join(activityDTInt,by="interval") %>%
+    mutate(steps=ifelse(is.na(steps),mean,steps)) %>%
+    select(steps,date,interval)
+#print the first 10 rows of the processed data
+head(activityDTNoNA,10)
+#Find number of steps per day , on the new Data table
+  activityDTNoNAH <- activityDTNoNA %>%
+    filter(!is.na(steps)) %>%
+    group_by(date) %>%
+    summarize(sum=sum(steps))
+#print the first 10 rows of the histogram data
+head(activityDTNoNAH,10)
+```
+3. Ploting the histogram of the new table (without NA values)
+```{r plotinghistNoNA, echo=TRUE}
+hist(activityDTNoNAH$sum, col="blue",xlab="Number of steps",
+     breaks=seq(from=0,to=25000,by=2000),
+     ylim=c(0,20),main="Histogram of number of steps per day")
+```
+4. Find the mean and median of the new data.
+The mean is:
+
+```{r echo=TRUE}
+mean(activityDTNoNAH$sum)
+```
+The meadian is:
+```{r echo=TRUE}
+median(activityDTNoNAH$sum)
+```
+
+5. The above mean, and median values are a bit different of the mean and median of the original data. Since we replaced the NA values (missing values) with average for each interval the mean did not change, but the median is getting closer to the mean. 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+First in order to find the activity patterns betwen weekdays and weekend, first we need to add another factor variable 'daytype' with 2 levels "weekdays" or "weekend" indicating whether a given date is a weekday or weekend.
+1. Use the data with filled-in missing values.
+- if weekdays(date) is "Sunday" or "Saturday" then the value of daytype is "weekend" otherwise "weekdays"
+- group the data by daytype and interval.
+- summarize by mean of steps to a new new factor mean.
+
+```{r addnewfactor, echo=TRUE}
+activityDTNew <- activityDTNoNA  %>%
+    mutate(daytype = as.factor(ifelse(weekdays(date) %in% c("Saturday","Sunday"),"weekend","weekdays"))) %>% 
+    group_by(daytype,interval) %>%
+    summarise(mean=mean(steps)) 
+
+#print the first 10 rows of the new data table.
+head(activityDTNew,10)
+```
+
+2. using xyplot (froml the pacakge lattice) to plot number the 5-minutes interval and number of Average number of steps.
+```{r plotbasedondaytype, echo=TRUE}
+library(lattice)
+xyplot(mean ~ interval | daytype,activityDTNew, 
+       type="l",lwd=1,
+       xlab="5-minute Interval",
+       ylab="Average number of steps",main="Average daily activity pattern",
+       layout=c(1,2))
+```
+
+### Done Thank you
