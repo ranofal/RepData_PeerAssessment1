@@ -1,8 +1,11 @@
-##IMPORTANT NOTE
+##IMPORTANT NOTE 
 Evaluator 
-There is a problem in the instruction about the auto-generated figures when running the knit2html.
-The figures are generated under the directory: ÎéÎíPA1_template_files/figure-html/ÎéÎí and not under the directory ÎéÎífigure/ÎéÎí as indicated in the instruction. 
-I did checked in all the auto-generated, even though in my original commit I created the figures manually and committed them under the directory ÎéÎífigure/ÎéÎí 
+There is a mistake in the instructions about the auto-generated figures, when running the knit2html.
+The figures are generated under the directory: "PA1_template_files/figure-html/" and not under the directory "figure/" as indicated in the instructions. 
+
+I checked in all the auto-generated figures that I suppose to check in at the submit date. Please take the latest commit and not the one I indicated originally. I haven't changed any code, I simply checked in the auto-generated figures, so they will appear on the .md file. 
+When I did the submit , I generated the figures manually and checked them in at the time I submitted my project. 
+Thanks
 
 ## Introduction
 
