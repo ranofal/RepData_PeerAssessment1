@@ -1,3 +1,9 @@
+##IMPORTANT NOTE
+Evaluator 
+There is a problem in the instruction about the auto-generated figures when running the knit2html.
+The figures are generated under the directory: ÎéÎíPA1_template_files/figure-html/ÎéÎí and not under the directory ÎéÎífigure/ÎéÎí as indicated in the instruction. 
+I did checked in all the auto-generated, even though in my original commit I created the figures manually and committed them under the directory ÎéÎífigure/ÎéÎí 
+
 ## Introduction
 
 It is now possible to collect a large amount of data about personal
